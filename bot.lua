@@ -146,7 +146,7 @@ on_msg_receive = function(msg) -- The fn run whenever a message is received.
 	if msg.chat.type == 'group' then msg.normal_group = true end
 	
 	--remove case sensitivity
-	msg.text == string.lower(msg.text)
+	msg.text = string.lower(msg.text)
 	
 	--for commands link
 	--[[if msg.text:match('^/start .+') then
