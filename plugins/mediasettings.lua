@@ -37,7 +37,7 @@ local function doKeyboard_media(chat_id)
 end
 
 local action = function(msg, blocks, ln)
-	
+	print(2222)
 	if not msg.cb and msg.chat.type ~= 'private' then
 		
 		if not is_mod(msg) then return end
@@ -46,7 +46,7 @@ local action = function(msg, blocks, ln)
 			local media_sett = db:hgetall('chat:'..msg.chat.id..':media')
 			local text = lang[ln].mediasettings.settings_header
 			for k,v in pairs(media_sett) do
-				text = text..'`'..k..'`'..' ≡ '..v..'\n'
+				text = text..'`'..k..'`'..' = '..v..'\n'
 			end
 			api.sendReply(msg, text, true)
 		end
@@ -61,9 +61,10 @@ local action = function(msg, blocks, ln)
 	    end
 	end
 	
+	print(msg.cb )
 	if msg.cb then
 		if blocks[1] == 'mediallert' then
-			api.answerCallbackQuery(msg.cb_id, '⚠️ '..lang[ln].bonus.menu_cb_media)
+			api.answerCallbackQuery(msg.cb_id, '?? '..lang[ln].bonus.menu_cb_media)
 			return
 		end
 		local cb_text
@@ -86,11 +87,11 @@ local action = function(msg, blocks, ln)
 					cb_text = make_text(lang[ln].floodmanager.changed_cross, current, new)
 				end
 			end
-			cb_text = '⚙ '..cb_text
+			cb_text = '? '..cb_text
 		end
 		if blocks[1] == 'media' then
 			local media = blocks[2]
-	    	cb_text = '⚡️ '..cross.changeMediaStatus(chat_id, media, 'next', ln)
+	    	cb_text = '?? '..cross.changeMediaStatus(chat_id, media, 'next', ln)
         end
         keyboard = doKeyboard_media(chat_id)
     	api.editMessageText(msg.chat.id, msg.message_id, lang[ln].all.media_first..group_name, keyboard, true)
@@ -101,10 +102,13 @@ end
 return {
 	action = action,
 	triggers = {
-		'^/(media list)$',
-		'^/(media)$',
 		'^###cb:(media):(%a+):(-%d+)',
 		'^###cb:(mediawarn):(%a+):(-%d+)',
 		'^###cb:(mediallert)',
+		'^###cb:(media):(.*):(.*)',
+		'^/(media list)$',
+		'^/(media)$',
+		
+
 	}
 }

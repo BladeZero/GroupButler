@@ -13,30 +13,6 @@ local function cron()
 	end
 end
 
-function split(message)
-        if sep == nil then
-                sep = "%n"
-        end
-        local t={}
-		local i=1
-		local count=1
-		local text = ''
-        for str in string.gmatch(message, "([^"..sep.."]+)") do	
-			--print(str)
-			
-			text = text..str..'\n' 
-			if  i % 50 == 0 then 
-				--print(text)
-				t[count] = text 
-				count = count + 1
-				text = ''
-			end 
-			i = i + 1
-        end
-		--table.setn(t, i)
-        return t
-end
-
 local function get_user_id(msg, blocks)
 	if msg.cb then
 		return blocks[2]
@@ -71,7 +47,6 @@ local function getBanList(chat_id, ln)
             text = text..'\n'
             i = i + 1
         end
-		print(i)
         return text
     end
 end
@@ -85,12 +60,6 @@ local function check_valid_time(temp)
 	else
 		return temp
 	end
-end
-
-function tablelength(T)
-  local count = 0
-  for _ in pairs(T) do count = count + 1 end
-  return count
 end
 
 local function get_time_reply(minutes)
@@ -112,7 +81,7 @@ end
 
 local action = function(msg, blocks, ln)
 	if msg.chat.type ~= 'private' then
-		if is_mod(msg) or config.admin.superAdmins[msg.from.id] then
+		if is_mod(msg) or config.admin.admins[msg.from.id] then
 			--commands that don't need a target user
 			if blocks[1] == 'kickme' then
 				api.sendReply(msg, lang[ln].kick_errors[2], true)
@@ -121,26 +90,11 @@ local action = function(msg, blocks, ln)
 			if blocks[1] == 'banlist' and not blocks[2] then
    				local banlist, is_empty = getBanList(msg.chat.id, ln)
    				if is_empty then
-					api.sendReply(msg, banlist, true)
+   					api.sendReply(msg, banlist, true)
    				else
-					local res, code = api.sendKeyboard(msg.chat.id, banlist, {inline_keyboard={{{text = 'Clean', callback_data = 'banlist-'}}}}, true)
-					if code == 118 then 
-						text = {}
-						text = split(banlist)
-						local size = tablelength(text)
-						--print(size)
-						for iteration = 1, size, 1 do
-							--print(iteration)
-							--print(msg.chat.id)
-							--print(text[iteration])
-							if text[iteration] ~= nil then
-								local reses, codes = api.sendKeyboard(msg.chat.id, text[iteration], {inline_keyboard={{{text = 'Clean', callback_data = 'banlist-'}}}}, true)
-								print(code)
-							end 
-						end 
-					end
+   					api.sendKeyboard(msg.chat.id, banlist, {inline_keyboard={{{text = 'Clean', callback_data = 'banlist-'}}}}, true)
    				end
-   				return 
+   				return
    			end
 		    if blocks[1] == 'banlist' and blocks[2] and blocks[2] == '-' then
 		    	local res, error = rdb.rem('chat:'..msg.chat.id..':bannedlist')
@@ -199,14 +153,13 @@ local action = function(msg, blocks, ln)
 				
 				--try to kick
 				local res, motivation = api.banUser(chat_id, user_id, is_normal_group, ln)
-		    	if not res then	
+		    	if not res then
 		    		if not motivation then
 		    			motivation = lang[ln].banhammer.general_motivation
 		    		end
 		    		api.sendReply(msg, motivation, true)
 		    	else
 		    		cross.saveBan(user_id, 'tempban') --save the ban
-					db:hdel('chat:'..msg.chat.id..':userJoin', msg.from.id)
 		    		db:hset('tempbanned', unban_time, val) --set the hash
 					local time_reply = get_time_reply(temp)
 					local banned_name = getname(msg.reply)
@@ -235,7 +188,6 @@ local action = function(msg, blocks, ln)
 		    		end
 		    		api.sendReply(msg, motivation, true)
 		    	else
-					db:hdel('chat:'..msg.chat.id..':userJoin', msg.from.id)
 		    		cross.saveBan(user_id, 'kick')
 		    		api.sendMessage(msg.chat.id, lang[ln].banhammer.kicked:build_text(get_nick(msg, false, true):mEscape(), get_nick(msg, blocks):mEscape()), true)
 		    	end
@@ -252,22 +204,6 @@ local action = function(msg, blocks, ln)
 		    		end
 		    		api.sendReply(msg, motivation, true)
 		    	else
-					local is_already_tempbanned = db:sismember('chat:'..chat_id..':tempbanned', user_id)
-					if is_already_tempbanned then 
-						print('Is already tempbanned')
-						local all = db:hgetall('tempbanned')
-						if next(all) then	
-							for unban_time,info in pairs(all) do
-								--print(chat_id..':'..user_id..' '..info)
-								if string.match(chat_id..':'..user_id, info) then 
-									db:hdel('tempbanned', unban_time)
-									--print('TimeRemoved '..unban_time)
-								end
-							end
-						end
-						db:srem('chat:'..chat_id..':tempbanned', user_id) --hash needed to check if an user is already tempbanned or not
-						--print('Removed from db '..'chat:'..chat_id..':tempbanned '..user_id)
-					end
 		    		--save the ban
 		    		cross.saveBan(user_id, 'ban')
 		    		--add to banlist
@@ -279,66 +215,37 @@ local action = function(msg, blocks, ln)
 		    			why = msg.text:gsub('^/ban @[%w_]+%s?', '')
 		    		end
 		    		cross.addBanList(msg.chat.id, user_id, nick, why)
-					db:hdel('chat:'..msg.chat.id..':userJoin', msg.from.id)
 		    		api.sendKeyboard(msg.chat.id, lang[ln].banhammer.banned:build_text(get_nick(msg, false, true):mEscape(), nick:mEscape()), {inline_keyboard = {{{text = 'Unban', callback_data = 'unban:'..user_id}}}}, true)
 		    	end
     		end
    			if blocks[1] == 'unban' then
    				local status = cross.getUserStatus(chat_id, user_id)
-				if not config.admin.GlobalBanList[user_id] then
-					local res = api.unbanUser(chat_id, user_id, is_normal_group)
-					--if not(status == 'kicked') and not(msg.chat.type == 'group') then
-						--api.sendReply(msg, lang[ln].banhammer.not_banned, true)
-						--return
-					--end
-					
-					local text
-					if not res and msg.chat.type == 'group' then
-						--api.sendReply(msg, lang[ln].banhammer.not_banned, true)
-						text = lang[ln].banhammer.not_banned
-					else
-						cross.remBanList(msg.chat.id, user_id)
-						text = lang[ln].banhammer.unbanned
-						--api.sendReply(msg, lang[ln].banhammer.unbanned, true)
-					end
-					if not msg.cb then
-						api.sendReply(msg, text, true)
-					else
-						api.editMessageText(msg.chat.id, msg.message_id, text..'\n`['..user_id..']\n(Admin: '..msg.from.first_name:mEscape()..')`', false, true)
-					end
-				end
-			end
+   				if not(status == 'kicked') and not(msg.chat.type == 'group') then
+   					api.sendReply(msg, lang[ln].banhammer.not_banned, true)
+   					return
+   				end
+   				local res = api.unbanUser(chat_id, user_id, is_normal_group)
+   				local text
+   				if not res and msg.chat.type == 'group' then
+   					--api.sendReply(msg, lang[ln].banhammer.not_banned, true)
+   					text = lang[ln].banhammer.not_banned
+   				else
+   					cross.remBanList(msg.chat.id, user_id)
+   					text = lang[ln].banhammer.unbanned
+   					--api.sendReply(msg, lang[ln].banhammer.unbanned, true)
+   				end
+   				if not msg.cb then
+   					api.sendReply(msg, text, true)
+   				else
+   					api.editMessageText(msg.chat.id, msg.message_id, text..'\n`['..user_id..']\n(Admin: '..msg.from.first_name:mEscape()..')`', false, true)
+   				end
+   			end
 		else
 			if blocks[1] == 'kickme' then
 				api.kickUser(msg.chat.id, msg.from.id, ln)
-				db:hdel('chat:'..msg.chat.id..':userJoin', msg.from.id)
 			end
 			if msg.cb then --if the user tap on 'unban', show the pop-up
 				api.answerCallbackQuery(msg.cb_id, lang[ln].not_mod:mEscape_hard())
-			end
-		end
-		if blocks[1] == 'getrekt' then
-			if config.admin.superAdmins[msg.from.id] then
-				 
-				if msg.reply.forward_from ~= nil then 
-					local forward = msg.reply.forward_from.id 
-					local hash = 'globalBan:'..forward
-					local mot = blocks[2]
-					print(forward..mot)
-					db:hset(hash, 'banned', 1)
-					db:hset(hash, 'motivation', mot)
-					db:hset(hash, 'time', os.date('On %A, %d %B %Y\nAt %X'))
-					api.sendReply(msg, 'User is rekted', true)
-				else
-					local uesr = msg.reply.from.id
-					local hash = 'globalBan:'..uesr
-					local mot = blocks[2]
-					print(mot)
-					db:hset(hash, 'banned', 1)
-					db:hset(hash, 'motivation', mot)
-					db:hset(hash, 'time', os.date('%d %B %Y, %X'))
-					api.sendReply(msg, 'User is rekted', true)
-				end
 			end
 		end
 	end
@@ -360,6 +267,5 @@ return {
 		'^/(unban)',
 		'^###cb:(unban):(%d+)$',
 		'^###cb:(banlist)(-)$',
-		'^/(getrekt) (%w+)'
 	}
 }

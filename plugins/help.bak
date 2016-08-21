@@ -43,9 +43,8 @@ local function make_keyboard(mod, mod_current_position)
 	else
 	    bottom_bar = {{text = '🔰 Admin commands', callback_data = '!mod'}}
 	end
-	table.insert(bottom_bar, {text = 'Get Support', url = 'https://telegram.me/werewolfsupport'}) --insert the "Info" button
+	table.insert(bottom_bar, {text = 'Info', callback_data = '!info_button'}) --insert the "Info" button
 	table.insert(keyboard.inline_keyboard, bottom_bar)
-	table.insert (keyboard.inline_keyboard, {{text = "Done", callback_data = "close"}})
 	return keyboard
 end
 
@@ -54,33 +53,25 @@ local function do_keybaord_credits()
     keyboard.inline_keyboard = {
     	{
     		{text = 'Channel', url = 'https://telegram.me/'..config.channel:gsub('@', '')},
-    		{text = 'GitHub', url = 'https://github.com/BladeZero/GroupButler'},
-    		{text = 'Get Support', url = 'https://telegram.me/werewolfsupport'},
+    		{text = 'GitHub', url = 'https://github.com/RememberTheAir/GroupButler'},
+    		{text = 'Rate me!', url = 'https://telegram.me/storebot?start='..bot.username},
 		},
 		{
 		    {text = '🔙', callback_data = '!user'}
-        },
-        {
-            {text = "Done", callback_data = "close"}
         }
 	}
 	return keyboard
 end
 
-
 local function do_keyboard_private()
     local keyboard = {}
     keyboard.inline_keyboard = {
     	{
-    		{text = '👥 Add me to a werewolf group', url = 'https://telegram.me/'..bot.username..'?startgroup=new'},
-    		{text = '📢 Werewolf update channel', url = 'https://telegram.me/'..config.channel:gsub('@', '')},
+    		{text = '👥 Add me to a group', url = 'https://telegram.me/'..bot.username..'?startgroup=new'},
+    		{text = '📢 Bot channel', url = 'https://telegram.me/'..config.channel:gsub('@', '')},
 	    },
 	    {
-	        {text = '📕 All the commands', callback_data = '!user'},
-            {text = 'Get Support', url = 'https://telegram.me/werewolfsupport'},
-        },
-        {
-            {text = "Done", callback_data = "close"}
+	        {text = '📕 All the commands', callback_data = '!user'}
         }
     }
     return keyboard

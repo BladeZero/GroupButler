@@ -3,8 +3,8 @@ local function do_keybaord_credits()
     keyboard.inline_keyboard = {
     	{
     		{text = 'Channel', url = 'https://telegram.me/'..config.channel:gsub('@', '')},
-    		{text = 'GitHub', url = 'https://github.com/BladeZero/GroupButler'},
-    		{text = 'Get Support', url = 'https://telegram.me/werewolfsupport'},
+    		{text = 'GitHub', url = 'https://github.com/RememberTheAir/GroupButler'},
+    		{text = 'Rate me!', url = 'https://telegram.me/storebot?start='..bot.username},
 		}
 	}
 	return keyboard
@@ -15,10 +15,6 @@ local function get_user_id(msg, blocks)
 		return msg.target_id
 	elseif msg.reply then
 		return msg.reply.from.id
-    elseif msg.entities then --this elseif is a test.
-        for i,entity in ipairs(msg.entities) do
-            if entity.type == "text_mention" then return entity.user.id end
-        end
 	elseif blocks[2] then
 		if blocks[2]:match('@[%w_]+') then
 			local user_id = res_user_group(blocks[2], msg.chat.id)
@@ -131,7 +127,7 @@ local action = function(msg, blocks, ln)
     end
     if blocks[1] == 'status' then
     	if msg.chat.type == 'private' then return end
-    	if is_mod(msg) or config.admin.superAdmins[msg.from.id] then
+    	if is_mod(msg) then
     		local user_id
     		if blocks[2]:match('%d+$') then
     			user_id = blocks[2]
@@ -158,36 +154,14 @@ local action = function(msg, blocks, ln)
 	 	end
  	end
  	if blocks[1] == 'id' then
- 		if is_mod(msg) or config.admin.superAdmins[msg.from.id] then
-			local id
-			local user = ''
-			if msg.reply then
-				if msg.reply.forward_from then 
-					id = msg.reply.forward_from.id
-					name = msg.reply.forward_from.first_name
-					if msg.reply.forward_from.username ~= nil then 
-						user = msg.reply.forward_from.username
-					end
-				else	
-					id = msg.reply.from.id
-					name = msg.reply.from.first_name
-					if msg.reply.from.username ~= nil then 
-						user = msg.reply.from.username
-					end
-				end
-			else
-				id = msg.chat.id
-				name = msg.chat.title
-				if msg.chat.username ~= nil then
-					user =  msg.chat.username
-				end
-			end
-			if user ~= '' then 
-				api.sendReply(msg, '`'..id..'`'..'\n`'..name..'`'..'\n@'..user, true)
-			else
-				api.sendReply(msg, '`'..id..'`'..'\n`'..name..'`', true)
-			end 
-		end
+ 		if not(msg.chat.type == 'private') and not is_mod(msg) then return end
+ 		local id
+ 		if msg.reply then
+ 			id = msg.reply.from.id
+ 		else
+ 			id = msg.chat.id
+ 		end
+ 		api.sendReply(msg, '`'..id..'`', true)
  	end
 	if blocks[1] == 'settings' then
         
@@ -373,14 +347,10 @@ local action = function(msg, blocks, ln)
 			api.sendReply(msg, text)
 		end
 	end
-	if blocks[1] == 'support' then
+	if blocks[1] == 'group' then
+		if msg.chat.type ~= 'private' then return end
 		if config.help_group and config.help_group ~= '' then
-			if msg.reply then 
-			 	msgToReplyTo = msg.reply.message_id
-			else 
-				msgToReplyTo = msg.message_id
-			end
-			api.sendMessage(msg.chat.id, '[Click here to get help from the support group]('..config.help_group..')', true, msgToReplyTo)
+			api.sendMessage(msg.chat.id, '[Click/tap here to join :)]('..config.help_group..')', true)
 		end
 	end
 	if blocks[1] == 'user' then
@@ -394,7 +364,7 @@ local action = function(msg, blocks, ln)
 		
 		local user_id = get_user_id(msg, blocks)
 		
-		if is_bot_owner(msg) and msg.reply and not msg.cb then --does this mean only global admins can get user by replying to a forwarded message??
+		if is_bot_owner(msg) and msg.reply and not msg.cb then
 			if msg.reply.forward_from then
 				user_id = msg.reply.forward_from.id
 			end
@@ -441,10 +411,6 @@ local action = function(msg, blocks, ln)
         
         api.editMessageText(msg.chat.id, msg.message_id, lang[ln].warn.nowarn..'\n`(Admin: '..msg.from.first_name:mEscape()..')`', false, true)
     end
-	
-	if blocks[1] == 'ping' then
-		api.sendReply(msg, 'Time to recieve ping message: '..os.date("%M:%S", (os.time() - msg.date))..'\nAverage Messages per second in: '..(last_m/60)..'\nMessages recieved in the last minute: '..last_m)
-	end
 end
 
 return {
@@ -458,13 +424,12 @@ return {
 		'^/(export)(ban)$',
 		'^/(export)(save)$',
 		'^/(importban)$',
-		'^/(support)$',
+		'^/(group)$',
 		'^/(welcome) (.*)$',
+		
 		'^/(user)$',
-        '^/(user) (.+)$', --this is to get also /user + text mention
-        '^/(user) (@[%w_]+)$',
+		'^/(user) (@[%w_]+)$',
 		'^/(user) (%d+)$',
-		'^/(ping)$',
 		
 		'^###cb:userbutton:(banuser):(%d+)$',
 		'^###cb:userbutton:(remwarns):(%d+)$',

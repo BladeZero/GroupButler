@@ -176,22 +176,43 @@ pre_process = function(msg, ln)
 		local user = msg.from.id
 		--print(inMessage)
 		if string.match(inMessage, mafiaMessage) then
-			--print("in if")
+			print("Message matched")
 			--api.kickUser(msg.chat.id, msg.from.id, ln)
 			api.banUser(msg.chat.id, msg.from.id, msg.normal_group, ln)
 			cross.addBanList(msg.chat.id, msg.from.id, msg.from.username, 'Mafia Spam')
-			print(msg.from.id..', '..msg.from.username..' banned for mafia spam in '..msg.chat.id)
+			if msg.from.username then
+				print(msg.from.id..', '..msg.from.username..' banned for mafia spam in '..msg.chat.id)
+				api.sendMessage(msg.chat.id, msg.from.username..' banned for mafia spam in '..msg.chat.id)
+			else
+				print(msg.from.id..', '..msg.from.first_name..' banned for mafia spam in '..msg.chat.id)
+				api.sendMessage(msg.chat.id, msg.from.first_name..' banned for mafia spam in '..msg.chat.id)
+			end
 		end
 		
 		local isBanned = db:hget('globalBan:'..msg.from.id, 'banned')
+		local support = -1001060486754
+		--if db.exists('globalBan'..msg.from.id, 'seenInSupport') then
+		local seenSupport = db:hget('globalBan:'..msg.from.id, 'seen')
+		--end 
 		if isBanned == '1' then
-			api.banUser(msg.chat.id, msg.from.id, msg.normal_group, ln)
-			local moti = db:hget('globalBan:'..msg.from.id, 'motivation')
-			cross.addBanList(msg.chat.id, msg.from.id, msg.from.username, 'Global banned for: '..moti)
-			api.sendMessage(msg.chat.id, msg.from.first_name..' has been automatically banned due as he has a history of: '..moti..'. To appeal this ban please join @werewolfsupport')
-			print(msg.from.id..', '..msg.from.username..' Global banned '..msg.chat.id)
+			if msg.chat.id ~= support then
+				api.banUser(msg.chat.id, msg.from.id, msg.normal_group, ln)
+				local moti = db:hget('globalBan:'..msg.from.id, 'motivation')
+				cross.addBanList(msg.chat.id, msg.from.id, msg.from.username, 'Global banned for: '..moti)
+				api.sendMessage(msg.chat.id, msg.from.first_name..' has been automatically banned due to a history of: '..moti..'. To appeal this ban please join @werewolfsupport')
+				api.sendAdmin(msg.from.first_name..', '..msg.from.id..' has been notified of ban in '..msg.chat.id..', '..msg.chat.title)
+				if msg.from.username then
+					print(msg.from.id..', '..msg.from.username..' Global banned '..msg.chat.id)
+				else
+					print(msg.from.id..', '..msg.from.first_name..' Global banned '..msg.chat.id)
+				end
+			elseif seenSupport ~= '1' then
+				local moti = db:hget('globalBan:'..msg.from.id, 'motivation')
+				local hash = 'globalBan:'..msg.from.id
+				db:hset(hash, 'seen', 1)
+				api.sendMessage(msg.chat.id, msg.from.first_name..' has a history of: '..moti..' and has joined @werewolfsupport to appeal this ban')			
+			end
 		end
-		
 		--print("by return")
 		local path = "./logs/MessageLog.txt"
 		file = io.open(path, "w")

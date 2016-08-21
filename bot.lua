@@ -124,10 +124,10 @@ end
 local function match_pattern(pattern, text)
   	if text then
   		text = text:gsub('@'..bot.username, '')
-    	local matches = {}
-    	matches = { string.match(text, pattern) }
-    	if next(matches) then
-    		return matches
+		local matches = {}
+		matches = { string.match(text, pattern) }
+		if next(matches) then
+			return matches
 		end
   	end
 end
@@ -145,9 +145,6 @@ on_msg_receive = function(msg) -- The fn run whenever a message is received.
 	msg.normal_group = false
 	if msg.chat.type == 'group' then msg.normal_group = true end
 	
-	--remove case sensitivity
-	msg.text = string.lower(msg.text)
-	
 	--for commands link
 	--[[if msg.text:match('^/start .+') then
 		msg.text = '/' .. msg.text:input()
@@ -160,7 +157,6 @@ on_msg_receive = function(msg) -- The fn run whenever a message is received.
 	end
 	
 	collect_stats(msg) --resolve_username support, chat stats
-	
 	for i,plugin in pairs(plugins) do
 		local stop_loop
 		if plugin.on_each_msg then
@@ -172,8 +168,13 @@ on_msg_receive = function(msg) -- The fn run whenever a message is received.
 			if plugin.triggers then
 				if (config.testing_mode and plugin.test) or not plugin.test then --run test plugins only if test mode it's on
 					for k,w in pairs(plugin.triggers) do
+						--print(w)
+						--print(msg.text)
+						--print(k)
 						local blocks = match_pattern(w, msg.text)
 						if blocks then
+							
+							--print(k)
 							
 							--workaround for the stupid bug
 							if not(msg.chat.type == 'private') and not db:exists('chat:'..msg.chat.id..':settings') and not msg.service then
@@ -193,11 +194,13 @@ on_msg_receive = function(msg) -- The fn run whenever a message is received.
       							if msg.from then db:incrby('user:'..msg.from.id..':query', 1) end
       						end
 							
+							--print(111)
 							--execute the plugin
 							local success, result = pcall(function()
 								return plugin.action(msg, blocks, msg.lang)
 							end)
-							
+							--print(success)
+							--print(result)
 							--if bugs
 							if not success then
 								print(msg.text, result)

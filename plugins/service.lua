@@ -90,7 +90,8 @@ local action = function(msg, blocks, ln)
 			return
 		end
 
-		
+		--Log user joining to the group
+		db:hset('chat:'..msg.chat.id..':userJoin', msg.from.id, os.date('%d %B %Y, %X'))
 
 		--[[if msg.chat.type == 'supergroup' and db:sismember('chat:'..msg.chat.id..':prevban') then
 			if msg.adder and is_mod(msg) then --if the user is added by a moderator, remove the added user from the prevbans
@@ -110,27 +111,27 @@ local action = function(msg, blocks, ln)
 			if username:find('bot', -3) then return end
 		end
 		
-		if id == 95890871 then
-				api.sendMessage(msg.chat.id, 'All hail the supreme KickLord. Listen to him for now, you will lynch him later on.')
+		if msg.added.id == "95890871" then
+				api.sendMessage(msg.chat.id, 'All hail KickLord. You can lynch him later')
 				return
 		end
-		if id == 125311351 then
+		if msg.added.id == 125311351 then
 			api.sendMessage(msg.chat.id, 'My mechanic is here!')
 			return
 		end
-		if id == 129046388 then
+		if msg.added.id == 129046388 then
 			api.sendMessage(msg.chat.id, 'Hello papa. *hugs Para949*')
 			return
 		end
-		if id == 23776848 then
+		if msg.added.id == 23776848 then
 			api.sendMessage(msg.chat.id, 'Banhammer is ready for use, milady. Feel free to strike them down.')
 			return
 		end
-		if id == 114566255 then
+		if msg.added.id == 114566255 then
 			api.sendMessage(msg.chat.id, 'NuteNuteNutella! I am hungry.. Feed me, bella! (and feel free to call for me. You know the way, right.. kick and bans <3)')
 			return
 		end
-		if config.admin.wwGlobalAdmins[msg.from.id] then 
+		if config.admin.wwGlobalAdmins[msg.added.id] then 
 			api.sendMessage(msg.chat.id, 'Welcome, Werewolf senior admin.')
 			return
 		end
@@ -165,6 +166,7 @@ local action = function(msg, blocks, ln)
 				cross.saveBan(msg.removed.id, action)
 			end
 		end
+		db:hdel('chat:'..msg.chat.id..':userJoin', msg.from.id)
 	end
 end
 
