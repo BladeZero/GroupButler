@@ -3,13 +3,10 @@ local function do_keybaord_credits()
     keyboard.inline_keyboard = {
     	{
     		{text = 'Channel', url = 'https://telegram.me/'..config.channel:gsub('@', '')},
-    		{text = 'GitHub', url = 'https://github.com/BladeZero/GroupButler'},
-            {text = 'Get Support', url = 'https://telegram.me/werewolfsupport'},
-        },
-        {
-            { text = "Done", callback_data = "close" }
-        }
-    }
+    		{text = 'GitHub', url = 'https://github.com/RememberTheAir/GroupButler'},
+    		{text = 'Rate me!', url = 'https://telegram.me/storebot?start='..bot.username},
+		}
+	}
 	return keyboard
 end
 
@@ -47,6 +44,16 @@ local action = function(msg, blocks, ln)
 			end
 		end
 	end
+	if blocks[1] == 'c' then
+		if msg.chat.type ~= 'private' then
+        	return
+    	end
+    	local text = 'This command *has been replaced!*\n\nNow you can start your message with an ! to communicate with the bot owner. Example:\n_!hello, how are you?_'
+    	if config.help_group and config.help_group ~= '' then
+    		text = text..'\n\nYou can also join the discussion group to ask your question/report a bug. You can join with [this link]('..config.help_group..')'
+    	end
+    	api.sendMessage(msg.chat.id, text, true)
+    end
     if blocks[1] == '!' then
     	if msg.chat.type ~= 'private' then
         	return
@@ -81,68 +88,11 @@ local action = function(msg, blocks, ln)
 		end
 		api.sendMessage(msg.chat.id, message, true)
 	end
-	
-	if blocks[1] == 'usrid' then
-		if msg.chat.type ~= 'private' then
-        	return
-    	end
- 		local id = ''
-		local user = ''
- 		if msg.reply then
-			if msg.reply.forward_from then 
-				id = msg.reply.forward_from.id
-				name = msg.reply.forward_from.first_name
-				if msg.reply.forward_from.username ~= nil then 
-					user = msg.reply.forward_from.username
-				end
-			else	
-				id = msg.reply.from.id
-				name = msg.reply.from.first_name
-				if msg.reply.from.username ~= nil then 
-					user = msg.reply.from.username
-				end
-			end
- 		end
-		if user ~= '' then 
-			api.sendReply(msg, '`'..id..'`'..'\n`'..name..'`'..'\n@'..user, true)
-		elseif id ~= '' then
-			api.sendReply(msg, '`'..id..'`'..'\n`'..name..'`', true)
-		end 
- 	end
-	if blocks[1] == 'userid' then
-		if msg.chat.type ~= 'private' then
-        	return
-    	end
- 		local id = ''
-		local user = ''
- 		if msg.reply then
-			if msg.reply.forward_from then 
-				id = msg.reply.forward_from.id
-				name = msg.reply.forward_from.first_name
-				if msg.reply.forward_from.username ~= nil then 
-					user = msg.reply.forward_from.username
-				end
-			else	
-				id = msg.reply.from.id
-				name = msg.reply.from.first_name
-				if msg.reply.from.username ~= nil then 
-					user = msg.reply.from.username
-				end
-			end
- 		end
-		if user ~= '' then 
-			api.sendReply(msg, '`'..id..'`'..'\n`'..name..'`'..'\n@'..user, true)
-		elseif id ~= '' then
-			api.sendReply(msg, '`'..id..'`'..'\n`'..name..'`', true)
-		end 
- 	end
 end
 
 return {
 	action = action,
 	triggers = {
-		'^/(userid)$',
-		'^/(usrid)$',
 		'^/(ping)$',
 		'^/(strings)$',
 		'^/(strings) (%a%a)$',

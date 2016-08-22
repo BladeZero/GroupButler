@@ -11,7 +11,7 @@ local function dump(o)
    end
 end
 
-local function get_mods_id(chat_id, msg)
+local function get_mods_id(chat_id)
     local res = api.getChatAdministrators(chat_id)
     if not res then return false end
     local ids = {}
@@ -61,14 +61,9 @@ local function send_to_admin(mods, chat, msg_id, reporter, is_by_reply, chat_tit
 		end
     end
 	--print(result[1], result[2], result[3], result[4])
-	if is_by_reply then
-		hash10 = 'flagged:'..msg.chat.id..':'..msg_id+1
-		--db:hset(hash10, 'byReply', 1)
-		--print("CHeck 1")
-	else
-		hash10 = 'flagged:'..msg.chat.id..':'..msg_id
+		hash10 = 'flagged:'..msg.chat.id..':'..msg.message_id
 		--print("check 2")
-	end
+		--api.sendReply(msg,'MessageID: '..msg.message_id..' '..os.date('!%c (UCT)'))
 	local timer = os.date('!%c (UCT)')
 	alreadyReported = db:hget(hash10, 'Solved')
 	--print("Reprorteorijt", alreadyReported)
@@ -219,6 +214,14 @@ local action = function(msg, blocks, ln)
 			api.sendReply(msg, lang[ln].not_mod)
 		end
 	end	
+	
+	if blocks[1] == 'msgid' then 
+		if is_mod(msg) or config.admin.superAdmins[msg.from.id] then
+			if msg.reply then
+				api.sendReply(msg,'MessageID: '..msg.reply.message_id..' '..os.date('!%c (UCT)'))
+			end
+		end	
+	end 	
 end
 
 return {
@@ -229,5 +232,6 @@ return {
 	    '^/(report) (on)$',
 	    '^/(report) (off)$',
 		'^/(solved)',
+		'^/(msgid)',
     }
 }

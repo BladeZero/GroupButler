@@ -61,6 +61,7 @@ local triggers2 = {
 	'^/a(initgroup) (-%d+)$',
 	'^/a(remgroup) (-%d+)$',
 	'^/a(remgroup) (true) (-%d+)$',
+	'^/a(dbdump) (.*)$',
 }
 
 local logtxt = ''
@@ -114,6 +115,19 @@ local function match_pattern(pattern, text)
   end
 end
 
+function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
+end
+
 local action = function(msg, blocks, ln)
 	
 	if not config.admin.admins[msg.from.id] then return end
@@ -126,6 +140,26 @@ local action = function(msg, blocks, ln)
 	end
 	
 	if not blocks or not next(blocks) then return true end --continue to match plugins
+	
+	if blocks[1] == 'dbdump' then 
+		print(Hello)
+		if blocks[2] then 
+			if is_bot_owner(msg) then
+				local dbCall = blocks[2]
+    			local finalTable = db:hgetall(dbCall)
+				--users = remove_duplicates(users)
+				if finalTable then
+					local path = './dump/'..dbCall..'.json'
+					save_data(path, finalTable)
+					api.sendDocument(msg.chat.id, path)
+				else
+					api.sendMessage(msg.chat.id, 'Empty table')
+				end
+			end
+		else
+			api.sendMessage(msg.from.id, 'Please send a valid db commmand')
+		end 
+	end
 	
 	if blocks[1] == 'admin' then
 		local text = ''
@@ -194,6 +228,7 @@ local action = function(msg, blocks, ln)
 	    	for i=1,#groups do
 	    		api.sendMessage(groups[i], blocks[2], true)
 	        	print('Sent', groups[i])
+				os.execute("sleep " .. tonumber(0.2))
 	    	end
 	    	api.sendMessage(msg.from.id, 'Broadcast delivered')
 	    end
