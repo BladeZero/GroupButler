@@ -460,6 +460,7 @@ return {
 		'^/(importban)$',
 		'^/(support)$',
 		'^/(welcome) (.*)$',
+		'^/(welcome)$',
 		'^/(user)$',
         '^/(user) (.+)$', --this is to get also /user + text mention
         '^/(user) (@[%w_]+)$',

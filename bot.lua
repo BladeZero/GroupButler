@@ -150,6 +150,10 @@ on_msg_receive = function(msg) -- The fn run whenever a message is received.
 		msg.text = '/' .. msg.text:input()
 	end]]
 	
+	--Remove case sensitivity
+	local tmp = string.match(msg.text, "^(/%a+)")
+	msg.text = tmp:lower() .. msg.text:sub(tmp:len() + 1)
+	
 	--Group language
 	msg.lang = db:get('lang:'..msg.chat.id)
 	if not msg.lang then
